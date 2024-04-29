@@ -105,7 +105,9 @@ router.post('/signin',
 });
 
 router.route('/movies')
-    .all(passport.authenticate('jwt', {session : false}, function(req) {}))
+
+    .all(passport.authenticate('jwt', {session : false}))
+
     .get(function(req, res) {
         if (req.query.review === 'true') {
             Movie.aggregate([
@@ -183,7 +185,7 @@ router.route('/movies')
     })
 
     .delete(function(req, res) {
-        Movie.findByIdAndDelete(req.body.title, (err, result) => {
+        Movie.findByIdAndDelete(req.body._id, (err, result) => {
             if (err) {
                 // handle error
                 res.status(500).send({success: false, msg: 'Failed to delete.'});
@@ -195,7 +197,8 @@ router.route('/movies')
     });
 
 router.route('/reviews')
-    .all(passport.authenticate('jwt', {session : false}, function(req) {}))
+
+    .all(passport.authenticate('jwt', {session : false}))
 
     .get(function(req, res) {
         Review.find({}).exec(function(err, result) {
