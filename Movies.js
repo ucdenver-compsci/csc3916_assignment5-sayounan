@@ -17,7 +17,8 @@ const MovieSchema = new Schema({
     actors: [{
         actorName: String,
         characterName: String,
-    }]
+    }],
+    imageURL: {type: String, required: true, index: true}
 });
 
 // return the model

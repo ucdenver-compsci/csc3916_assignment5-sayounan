@@ -4,7 +4,6 @@ File: Server.js
 Description: Web API scaffolding for Movie API
  */
 
-require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const passport = require('passport');
@@ -15,26 +14,29 @@ const cors = require('cors');
 const User = require('./Users');
 const Movie = require('./Movies');
 const Review = require('./Reviews');
-const mongoose = require("mongoose");
-const res = require("express/lib/response");
+// const mongoose = require("mongoose");
+// const res = require("express/lib/response");
+
+// require('dotenv').config();
+
+const router = express.Router();
 
 const app = express();
 app.use(cors({origin: 'https://csc3916-react-sayounan.onrender.com'}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use('/', router);
 
 app.use(passport.initialize());
 
-const router = express.Router();
+/*const uri = process.env.DB;
+ const port = process.env.PORT || // Number; */
 
-const uri = process.env.DB;
-// const port = process.env.PORT || // Number;
-
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+/* mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('MongoDB connected'))
-    .catch(err => console.log(err));
+    .catch(err => console.log(err)); */
 
-/* function getJSONObjectForMovieRequirement(req) {
+function getJSONObjectForMovieRequirement(req) {
     const json = {
         headers: "No headers",
         key: process.env.UNIQUE_KEY,
@@ -50,10 +52,11 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
     }
 
     return json;
-}*/
+}
 
-router.post('/signup', function(req,
-                                res) {
+router.post('/signup',
+    function(req, res) {
+
     if (!req.body.username || !req.body.password) {
         res.json({success: false, msg: 'Please include both username and password to signup.'})
     } else {
@@ -75,8 +78,9 @@ router.post('/signup', function(req,
     }
 });
 
-router.post('/signin', function (req,
-                                 res) {
+router.post('/signin',
+    function (req, res) {
+
     const userNew = new User();
     userNew.username = req.body.username;
     userNew.password = req.body.password;
@@ -101,9 +105,9 @@ router.post('/signin', function (req,
 });
 
 router.route('/movies')
-    .all(passport.authenticate('jwt', {session : false}))
+    .all(passport.authenticate('jwt', {session : false}, function(req) {}))
     .get(function(req, res) {
-        if (req.query.reviews === 'true') {
+        if (req.query.review === 'true') {
             Movie.aggregate([
                 /*
                 {
@@ -116,12 +120,13 @@ router.route('/movies')
                         from: "Review", // name of the foreign collection
                         localField: "_id", // field in the orders collection
                         foreignField: "movieId", // field in the items collection
-                        as: "Reviews" // output array where the joined items will be placed
+                        as: "Review" // output array where the joined items will be placed
                     }
                 },
                 {
                     $addFields: {
-                        avgRating: { $avg: '$reviews.rating' }
+                        avgRating: { $avg: '$reviews.rating' },
+                        imageURL: '$imageURL'
                     }
                 },
                 {
@@ -138,7 +143,7 @@ router.route('/movies')
                 }
             });
         } else {
-            Movie.find({}, function(err, result) {
+            Movie.find(title ? {title} : {}, function(err, result) {
                 if (err) {
                     // handle error
                     if (err)
@@ -165,7 +170,7 @@ router.route('/movies')
     })
 
     .put(function(req, res) {
-        Movie.findByIdAndUpdate(req.body._id, req.body, {new: true}, (err,
+        Movie.findOneAndUpdate(req.body._id, req.body, {new: true}, (err,
                                                                       result) => {
             if (err) {
                 // handle error
@@ -178,7 +183,7 @@ router.route('/movies')
     })
 
     .delete(function(req, res) {
-        Movie.findByIdAndDelete(req.body._id, (err, result) => {
+        Movie.findByIdAndDelete(req.body.title, (err, result) => {
             if (err) {
                 // handle error
                 res.status(500).send({success: false, msg: 'Failed to delete.'});
@@ -190,7 +195,7 @@ router.route('/movies')
     });
 
 router.route('/reviews')
-    .all(passport.authenticate('jwt', {session : false}))
+    .all(passport.authenticate('jwt', {session : false}, function(req) {}))
 
     .get(function(req, res) {
         Review.find({}).exec(function(err, result) {
